@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { notificationApi } from '../api/notificationApi';
 import { toApiError } from '../api/axios';
 import { NotificationItem } from '../types';
+import { RootState } from './index';
 
 interface NotificationState {
   items: NotificationItem[];
@@ -94,5 +95,8 @@ const notificationSlice = createSlice({
       });
   },
 });
+
+export const selectUnreadNotificationCount = (state: RootState) =>
+  state.notifications.items.filter(item => !item.read_at).length;
 
 export default notificationSlice.reducer;

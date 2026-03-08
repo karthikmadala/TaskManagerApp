@@ -5,7 +5,6 @@ import { Button, Snackbar, Text, TextInput } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as yup from 'yup';
 import { ProfileStackParamList } from '../../navigation/MainNavigator';
-import Header from '../../components/Header';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppDispatch } from '../../store';
 import { fetchProfile } from '../../store/authSlice';
@@ -63,7 +62,14 @@ const ProfileScreen = ({ navigation }: Props) => {
       return;
     }
 
-    const result = await updateProfile(values.name, values.email, values.phone);
+    const result = await updateProfile(
+      values.name,
+      values.email,
+      values.phone,
+      values.address,
+      values.zip,
+      values.city,
+    );
     if (
       (result as { meta?: { requestStatus?: string } }).meta?.requestStatus ===
       'rejected'
@@ -76,7 +82,6 @@ const ProfileScreen = ({ navigation }: Props) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* <Header title="Profile" /> */}
       <Text style={styles.title} variant="titleLarge">
         Manage Account
       </Text>
@@ -165,12 +170,12 @@ const ProfileScreen = ({ navigation }: Props) => {
         name="zip"
         render={({ field: { onChange, onBlur, value }, fieldState }) => (
           <TextInput
-            label="zip"
+            label="Zip"
             mode="outlined"
             value={value || ''}
             onBlur={onBlur}
             onChangeText={onChange}
-            multiline
+            keyboardType="number-pad"
             style={styles.input}
             error={!!fieldState.error}
           />

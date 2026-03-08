@@ -1,9 +1,14 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigatorScreenParams } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Animated } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  createNativeStackNavigator,
+  NativeStackHeaderProps,
+} from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
+import { getHeaderTitle } from '@react-navigation/elements';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppHeader from '../components/AppHeader';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import TaskListScreen from '../screens/tasks/TaskListScreen';
 import TaskDetailScreen from '../screens/tasks/TaskDetailScreen';
@@ -14,10 +19,12 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
 
 export type TaskStackParamList = {
-  TaskList: {
-    filter?: 'all' | 'completed' | 'pending' | 'overdue' | 'open';
-    title?: string;
-  } | undefined;
+  TaskList:
+    | {
+        filter?: 'all' | 'completed' | 'pending' | 'overdue' | 'open';
+        title?: string;
+      }
+    | undefined;
   TaskDetail: { taskId: number };
   CreateTask: undefined;
   EditTask: { taskId: number };
@@ -34,12 +41,17 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
+type DashboardStackParamList = {
+  DashboardHome: undefined;
+};
+
 type MainRootStackParamList = {
   Tabs: undefined;
   Notifications: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const DashboardStack = createNativeStackNavigator<DashboardStackParamList>();
 const TaskStack = createNativeStackNavigator<TaskStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const RootStack = createNativeStackNavigator<MainRootStackParamList>();
@@ -73,12 +85,82 @@ const AnimatedTabIcon = ({
   );
 };
 
+const dashboardTabIcon = ({
+  color,
+  size,
+  focused,
+}: {
+  color: string;
+  size: number;
+  focused: boolean;
+}) => (
+  <AnimatedTabIcon name="grid-outline" size={size} color={color} focused={focused} />
+);
+
+const tasksTabIcon = ({
+  color,
+  size,
+  focused,
+}: {
+  color: string;
+  size: number;
+  focused: boolean;
+}) => (
+  <AnimatedTabIcon
+    name="checkmark-done-outline"
+    size={size}
+    color={color}
+    focused={focused}
+  />
+);
+
+const profileTabIcon = ({
+  color,
+  size,
+  focused,
+}: {
+  color: string;
+  size: number;
+  focused: boolean;
+}) => (
+  <AnimatedTabIcon name="person-outline" size={size} color={color} focused={focused} />
+);
+
+const renderGlobalHeader = ({
+  navigation,
+  route,
+  options,
+  back,
+}: NativeStackHeaderProps) => {
+  const title = getHeaderTitle(options, route.name);
+
+  const onNotificationPress = () => {
+    const parent = navigation.getParent();
+    const routeNames = parent?.getState().routeNames ?? [];
+    if (routeNames.includes('Notifications')) {
+      parent?.navigate('Notifications' as never);
+      return;
+    }
+
+    navigation.navigate('Notifications' as never);
+  };
+
+  return (
+    <AppHeader
+      title={title}
+      canGoBack={!!back}
+      onBackPress={navigation.goBack}
+      onNotificationPress={onNotificationPress}
+    />
+  );
+};
+
 const TaskStackNavigator = () => (
-  <TaskStack.Navigator>
+  <TaskStack.Navigator screenOptions={{ header: renderGlobalHeader }}>
     <TaskStack.Screen
       name="TaskList"
       component={TaskListScreen}
-      options={{ title: 'Tasks' }}
+      options={({ route }) => ({ title: route.params?.title ?? 'Tasks' })}
     />
     <TaskStack.Screen
       name="TaskDetail"
@@ -98,8 +180,18 @@ const TaskStackNavigator = () => (
   </TaskStack.Navigator>
 );
 
+const DashboardStackNavigator = () => (
+  <DashboardStack.Navigator screenOptions={{ header: renderGlobalHeader }}>
+    <DashboardStack.Screen
+      name="DashboardHome"
+      component={DashboardScreen}
+      options={{ title: 'Dashboard' }}
+    />
+  </DashboardStack.Navigator>
+);
+
 const ProfileStackNavigator = () => (
-  <ProfileStack.Navigator>
+  <ProfileStack.Navigator screenOptions={{ header: renderGlobalHeader }}>
     <ProfileStack.Screen
       name="ProfileHome"
       component={ProfileScreen}
@@ -116,7 +208,7 @@ const ProfileStackNavigator = () => (
 const TabNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#2563EB',
         tabBarInactiveTintColor: '#64748B',
@@ -128,26 +220,22 @@ const TabNavigator = () => {
           paddingTop: 8,
           backgroundColor: '#FFFFFF',
         },
-        tabBarIcon: ({ color, size, focused }) => {
-          const iconByRoute: Record<string, string> = {
-            Dashboard: 'grid-outline',
-            Tasks: 'checkmark-done-outline',
-            Profile: 'person-outline',
-          };
-
-          return (
-            <AnimatedTabIcon
-              name={iconByRoute[route.name] ?? 'ellipse-outline'}
-              size={size}
-              color={color}
-              focused={focused}
-            />
-          );
-        },
-      })}>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Tasks" component={TaskStackNavigator} />
-      <Tab.Screen name="Profile" component={ProfileStackNavigator} />
+      }}>
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardStackNavigator}
+        options={{ tabBarIcon: dashboardTabIcon }}
+      />
+      <Tab.Screen
+        name="Tasks"
+        component={TaskStackNavigator}
+        options={{ tabBarIcon: tasksTabIcon }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStackNavigator}
+        options={{ tabBarIcon: profileTabIcon }}
+      />
     </Tab.Navigator>
   );
 };
@@ -155,15 +243,11 @@ const TabNavigator = () => {
 const MainNavigator = () => {
   return (
     <RootStack.Navigator>
-      <RootStack.Screen
-        name="Tabs"
-        component={TabNavigator}
-        options={{ headerShown: false }}
-      />
+      <RootStack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
       <RootStack.Screen
         name="Notifications"
         component={NotificationScreen}
-        options={{ headerShown: false }}
+        options={{ title: 'Notifications', header: renderGlobalHeader }}
       />
     </RootStack.Navigator>
   );

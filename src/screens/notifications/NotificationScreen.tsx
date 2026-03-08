@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { Button, Card, Text } from 'react-native-paper';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Button } from 'react-native-paper';
 import EmptyState from '../../components/EmptyState';
-import Header from '../../components/Header';
 import Loader from '../../components/Loader';
+import NotificationItemCard from '../../components/NotificationItem';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchNotifications, markNotificationRead } from '../../store/notificationSlice';
 import { NotificationItem } from '../../types';
@@ -19,35 +18,16 @@ const NotificationScreen = () => {
     dispatch(fetchNotifications({ page: 1 }));
   }, [dispatch]);
 
-  const renderItem = ({ item }: { item: NotificationItem }) => (
-    <Card style={[styles.card, !item.read_at ? styles.unreadCard : null]}>
-      <Card.Content>
-        <View style={styles.titleRow}>
-          <Ionicons
-            name={!item.read_at ? 'notifications' : 'notifications-outline'}
-            size={18}
-            color={!item.read_at ? '#FF6B35' : '#4A5568'}
-          />
-          <Text variant="titleMedium" style={styles.title}>
-            {item.title}
-          </Text>
-        </View>
-        <Text style={styles.message}>{item.message}</Text>
-        <Text variant="bodySmall">{item.created_at ?? ''}</Text>
-      </Card.Content>
-      {!item.read_at ? (
-        <Card.Actions>
-          <Button onPress={() => dispatch(markNotificationRead(item.id))}>
-            Mark as read
-          </Button>
-        </Card.Actions>
-      ) : null}
-    </Card>
-  );
+  const handlePressItem = useCallback((id: string) => {
+    dispatch(markNotificationRead(id));
+  }, [dispatch]);
+
+  const renderItem = useCallback(({ item }: { item: NotificationItem }) => (
+    <NotificationItemCard item={item} onPress={handlePressItem} />
+  ), [handlePressItem]);
 
   return (
     <View style={styles.container}>
-      <Header title="Notifications" showNotificationAction={false} />
       {loading && items.length === 0 ? (
         <Loader variant="skeleton" />
       ) : (
@@ -88,29 +68,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 24,
-  },
-  card: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  unreadCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B35',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    textTransform: 'capitalize',
-  },
-  message: {
-    marginVertical: 8,
-    opacity: 0.9,
-    color: '#1F2937',
   },
   loadMore: {
     marginTop: 16,

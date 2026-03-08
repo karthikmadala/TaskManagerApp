@@ -11,7 +11,6 @@ import {
 import { Button, Chip, Snackbar } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import EmptyState from '../../components/EmptyState';
-import Header from '../../components/Header';
 import Loader from '../../components/Loader';
 import TaskCard from '../../components/TaskCard';
 import { TaskStackParamList } from '../../navigation/MainNavigator';
@@ -109,11 +108,11 @@ const TaskListScreen = ({ navigation, route }: Props) => {
 
   return (
     <View style={styles.container}>
-      {/* <Header
-        title={route.params?.title ?? 'Task Zone'}
-        actionIcon="plus-circle-outline"
-        onActionPress={() => navigation.navigate('CreateTask')}
-      /> */}
+      <View style={styles.toolbarRow}>
+        <Button mode="contained" onPress={() => navigation.navigate('CreateTask')}>
+          New Task
+        </Button>
+      </View>
       <View style={styles.filterRow}>
         <Chip selected={activeFilter === 'all'} onPress={() => applyFilter('all')}>
           All
@@ -189,6 +188,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 10,
     paddingBottom: 6,
+  },
+  toolbarRow: {
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 2,
+    alignItems: 'flex-end',
   },
 });
 
